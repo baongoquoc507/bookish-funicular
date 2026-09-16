@@ -22,13 +22,15 @@ struct BleHidState {
 static BleHidState gBle;
 
 class HidServerCB : public NimBLEServerCallbacks {
-    void onConnect(NimBLEServer* s, NimBLEConnInfo& ci) override {
+public:
+    void onConnect(NimBLEServer* server, NimBLEConnInfo& connInfo) override {
         gBle.connected = true;
         NimBLEDevice::stopAdvertising();
     }
-    void onDisconnect(NimBLEServer* s, NimBLEConnInfo& ci) override {
+
+    void onDisconnect(NimBLEServer* server, NimBLEConnInfo& connInfo, int reason) override {
         gBle.connected = false;
-        s->startAdvertising();
+        NimBLEDevice::startAdvertising();
     }
 };
 
@@ -59,7 +61,7 @@ void BleHid_Stop()
 void BleHid_WaitConnect(const char* line2)
 {
     while (!gBle.connected) {
-        if (ReadButton(BUTTON_CENTER)) return; // cho phep huy
+        if (ReadButton(BUTTON_CENTER)) return;
         display.clearDisplay();
         display.setTextSize(1);
         display.setCursor(0, 0);  display.print("BLE HID");
@@ -167,7 +169,7 @@ void BleMouse_Run()
         if (ReadButton(BUTTON_RIGHT)) { dir = (dir + 1) % 8; delay(180); }
         if (ReadButton(BUTTON_CENTER)) {
             if (pressStart == 0) pressStart = millis();
-            if (millis() - pressStart > 800) break; // giu CENTER 0.8s = thoat
+            if (millis() - pressStart > 800) break;
             clicking = true;
         } else { pressStart = 0; clicking = false; }
 
