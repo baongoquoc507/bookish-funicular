@@ -3,19 +3,18 @@
 #include "utils.hpp"
 #include "../display_utils.h"
 #include "../menu.hpp"
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEScan.h>
-#include <BLEAdvertisedDevice.h>
+#include <NimBLEScan.h>
+#include <NimBLEAdvertisedDevice.h>
 
 static std::vector<String> g_found;
-static BLEScan* pBLEScan;
+static NimBLEScan* pBLEScan = nullptr;
 
-class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
-    void onResult(BLEAdvertisedDevice advertisedDevice) {
-        String addr = advertisedDevice.getAddress().toString().c_str();
-        String name = advertisedDevice.getName().c_str();
-        int rssi = advertisedDevice.getRSSI();
+class MyAdvertisedDeviceCallbacks : public NimBLEAdvertisedDeviceCallbacks {
+public:
+    void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override {
+        String addr = advertisedDevice->getAddress().toString().c_str();
+        String name = advertisedDevice->getName().c_str();
+        int rssi = advertisedDevice->getRSSI();
 
         String entry;
         if (name.length() > 0) {
@@ -24,12 +23,12 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
             entry = addr + " RSSI:" + String(rssi);
         }
 
-        if (advertisedDevice.haveManufacturerData()) {
-            std::string mfg = advertisedDevice.getManufacturerData();
+        if (advertisedDevice->haveManufacturerData()) {
+            std::string mfg = advertisedDevice->getManufacturerData();
             entry += " MFG:";
             for (size_t i = 0; i < mfg.length(); i++) {
                 char buf[4];
-                sprintf(buf, "%02X", (uint8_t)mfg[i]);
+                snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mfg[i]));
                 entry += buf;
             }
         }
@@ -48,9 +47,9 @@ void BLE_Scan()
     Display_PrintCentered("Scanning...");
     display.display();
 
-    BLEDevice::init("");
-    pBLEScan = BLEDevice::getScan();
-    pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+    NimBLEDevice::init("");
+    pBLEScan = NimBLEDevice::getScan();
+    pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks(), false);
     pBLEScan->setActiveScan(true);
     pBLEScan->setInterval(100);
     pBLEScan->setWindow(99);
@@ -59,11 +58,14 @@ void BLE_Scan()
         g_found.clear();
         pBLEScan->start(3, false);
         display.clearDisplay();
-        Display_PrintCentered("Scanning...\nFound: %d", (int)g_found.size());
+        Display_PrintCentered("Scanning...\nFound: %d", static_cast<int>(g_found.size()));
         display.display();
         pBLEScan->clearResults();
         delay(10);
     }
+
+    pBLEScan->stop();
+    NimBLEDevice::deinit(true);
 
     Menu menu;
     for (auto& dev : g_found) {
