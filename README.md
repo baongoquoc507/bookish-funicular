@@ -78,4 +78,3 @@ Please follow these code style rules when contributing:
 - **Global functions:** use `PascalCase` with all caps prefix if relevant → examples: `SPI_Test`, `RF_Yes`
 - **Class / struct functions:** use `PascalCase` → examples: `AddItem`, `PrintTesting`
 - **Comments:** do **not** add comments in the code
-# bookish-funicular
