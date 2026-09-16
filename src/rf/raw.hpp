@@ -146,8 +146,9 @@ void RF_Analyzer()
         float mhz = 300.0f + idx * (628.0f / 20.0f); // 300..928 MHz
         ELECHOUSE_cc1101.setMHZ(mhz);
         delay(6);
-        int rssi = ELECHOUSE_cc1101.getRssi(); // gia tri am, cang am cang yeu
-        int v = constrain(-rssi - 30, 0, 60);
+        int raw = ELECHOUSE_cc1101.SpiReadStatus(0x34); // CC1101_RSSI
+        int rssiDbm = ((raw >= 128) ? raw - 256 : raw) / 2 - 74;
+        int v = constrain(-rssiDbm - 30, 0, 60);
         hist[idx] = (hist[idx] * 3 + (uint32_t)v) / 4;
         idx = (idx + 1) % 21;
 

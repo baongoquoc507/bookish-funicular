@@ -41,10 +41,10 @@ void BleHid_Start(const char* name, const uint8_t* map, size_t mapLen, uint8_t r
     gBle.hid = new NimBLEHIDDevice(server);
     gBle.hid->setReportMap((uint8_t*)map, mapLen);
     gBle.hid->startServices();
-    gBle.input = gBle.hid->inputReport(reportId);
+    gBle.input = gBle.hid->getInputReport(reportId);
     NimBLEAdvertising* adv = NimBLEDevice::getAdvertising();
     adv->setAppearance(HID_KEYBOARD);
-    adv->addServiceUUID(gBle.hid->hidService()->getUUID());
+    adv->addServiceUUID(gBle.hid->getHidService()->getUUID());
     adv->start();
 }
 
