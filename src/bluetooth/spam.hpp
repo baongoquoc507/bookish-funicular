@@ -31,16 +31,7 @@ enum SPAM_PAYLOAD_TYPE {
 
 void BLE_SpamSendPayload(SPAM_PAYLOAD_TYPE type)
 {
-    esp_bd_addr_t dummy_addr = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    for (int i = 0; i < 6; i++){
-        dummy_addr[i] = random(256);
-        if (i == 0){
-        dummy_addr[i] |= 0xF0;
-        }
-    }
-
-    BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-    int adv_type = random(3);
+    NimBLEAdvertisementData oAdvertisementData;
 
     if (type == SPAM_PAYLOAD_TYPE_APPLE_DEVICE)
     {
@@ -131,43 +122,31 @@ void BLE_SpamSendPayload(SPAM_PAYLOAD_TYPE type)
         spamming_device = "All";
     }
 
-    if (adv_type == 0)
-    {
-        advertising->setAdvertisementType(ADV_TYPE_IND);
+    if (advertising != nullptr) {
+        advertising->stop();
+        advertising->setScanResponse(false);
+        advertising->setAdvertisementData(oAdvertisementData);
+        advertising->setMinInterval(0x20);
+        advertising->setMaxInterval(0x20);
+        advertising->setMinPreferred(0x20);
+        advertising->setMaxPreferred(0x20);
+        advertising->start();
+        delay(100);
+        advertising->stop();
     }
-    else if (adv_type == 1)
-    {
-        advertising->setAdvertisementType(ADV_TYPE_SCAN_IND);
-    }
-    else
-    {
-        advertising->setAdvertisementType(ADV_TYPE_NONCONN_IND);
-    }
-
-    advertising->setDeviceAddress(dummy_addr, BLE_ADDR_TYPE_RANDOM);
-    advertising->setAdvertisementData(oAdvertisementData);
-
-    advertising->setMinInterval(0x20);
-    advertising->setMaxInterval(0x20);
-    advertising->setMinPreferred(0x20);
-    advertising->setMaxPreferred(0x20);
-
-    advertising->start();
-    delay(100);
-    advertising->stop();
 
     int rand_val = random(100);
-  if (rand_val < 70) {
-      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, MAX_TX_POWER);
-  } else if (rand_val < 85) {
-      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, (esp_power_level_t)(MAX_TX_POWER - 1));
-  } else if (rand_val < 95) {
-      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, (esp_power_level_t)(MAX_TX_POWER - 2));
-  } else if (rand_val < 99) {
-      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, (esp_power_level_t)(MAX_TX_POWER - 3));
-  } else {
-      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, (esp_power_level_t)(MAX_TX_POWER - 4));
-  }
+    if (rand_val < 70) {
+        esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, MAX_TX_POWER);
+    } else if (rand_val < 85) {
+        esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, (esp_power_level_t)(MAX_TX_POWER - 1));
+    } else if (rand_val < 95) {
+        esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, (esp_power_level_t)(MAX_TX_POWER - 2));
+    } else if (rand_val < 99) {
+        esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, (esp_power_level_t)(MAX_TX_POWER - 3));
+    } else {
+        esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, (esp_power_level_t)(MAX_TX_POWER - 4));
+    }
 }
 
 void BLE_Spam()
@@ -219,9 +198,12 @@ void BLE_Spam()
             ++num;
         }
     }
-    advertising->stop();
-    
-    BLEDevice::deinit(true);
+
+    if (advertising != nullptr) {
+        advertising->stop();
+    }
+
+    NimBLEDevice::deinit(true);
     delay(200);
 
     if (err == ESP_OK) {
